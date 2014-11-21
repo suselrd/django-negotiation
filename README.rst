@@ -7,6 +7,11 @@ Negotiation Workflow Management for Django>=1.6.1
 
 Changelog
 =========
+0.1.1
+-----
+
+Template tag 'render_members' now generates links to the user's profile absolute url (if any).
+
 0.1.0
 -----
 

@@ -55,8 +55,15 @@ def members(negotiation_part):
 @register.simple_tag
 def render_members(negotiation_part):
     if negotiation_part is not None:
-        tpl = "<a href='%s'>%s</a>"  # TODO add the permalink of the user profile
-        _members = [tpl % ('#', user.get_full_name()) for user in negotiation_part.users]
+        _members = list()
+        for user in negotiation_part.users:
+            if hasattr(user, 'profile') and hasattr(getattr(user, 'profile'), 'get_absolute_url'):
+                tpl = "<a href='%s'>%s</a>"
+                data = (user.profile.get_absolute_url(), user.get_full_name())
+            else:
+                tpl = "%s"
+                data = user.get_full_name()
+            _members.append(tpl % data)
         return ', '.join(_members)
     else:
         return ''
