@@ -44,6 +44,19 @@ def is_last_updater(negotiable, user):
 
 
 @register.filter
+def has_last_updater_permissions(negotiable, user):
+    """
+    Returns whether a user has last updater permissions on the passed negotiable or not.
+    """
+    #noinspection PyBroadException
+    try:
+        return negotiable.negotiation.has_last_updater_permissions(user)
+    except Exception as e:
+        logger.exception(e)
+        return False
+
+
+@register.filter
 def members(negotiation_part):
     if negotiation_part is not None:
         _members = [user.get_full_name() for user in negotiation_part.users]

@@ -7,6 +7,12 @@ Negotiation Workflow Management for Django>=1.6.1
 
 Changelog
 =========
+0.1.2
+-----
+
+Added new method 'has_last_updater_permissions' to negotiation objects.
+New templatetag 'has_last_updater_permissions' that calls this new method.
+
 0.1.1
 -----
 

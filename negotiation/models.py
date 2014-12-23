@@ -284,6 +284,14 @@ class Negotiation(models.Model):
     def is_last_updater(self, user):
         return user == self.last_updater[0]
 
+    def has_last_updater_permissions(self, user):
+        last_updater_role = self.last_updater[1]
+        return (
+            user in self.client.users and last_updater_role == client_role()
+        ) or (
+            user in self.seller.users and last_updater_role == seller_role()
+        )
+
     def _last_client_proposal(self):
         client_versions_gen = (version for version in self.history() if version['updater'] in self.client.users)
         try:
