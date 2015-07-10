@@ -20,7 +20,7 @@ def render_negotiation_options(context, negotiable, scope='', kwargs={}):
         return render_to_string(
             template_search_list, {
                 'object': negotiable,
-                'transitions': negotiable.negotiation.get_allowed_transitions(
+                'transitions': negotiable.negotiation_options(
                     context['user']
                 ),
                 'user': context['user']
@@ -37,7 +37,7 @@ def is_last_updater(negotiable, user):
     """
     #noinspection PyBroadException
     try:
-        return negotiable.negotiation.is_last_updater(user)
+        return negotiable.is_last_updater(user)
     except Exception as e:
         logger.exception(e)
         return False
@@ -65,14 +65,36 @@ def members(negotiation_part):
         return ''
 
 
+@register.filter
+def clients(negotiable):
+    try:
+        negotiation = negotiable.negotiation
+    except Exception as e:
+        logger.exception(e)
+        return []
+    return members(negotiation.client)
+
+
+@register.filter
+def sellers(negotiable):
+    try:
+        negotiation = negotiable.negotiation
+    except Exception as e:
+        logger.exception(e)
+        return []
+    return members(negotiation.seller)
+
+
 @register.simple_tag
-def render_members(negotiation_part):
+def render_members(negotiation_part, profile_attribute_name='profile'):
     if negotiation_part is not None:
         _members = list()
         for user in negotiation_part.users:
-            if hasattr(user, 'profile') and hasattr(getattr(user, 'profile'), 'get_absolute_url'):
+            if (hasattr(user, profile_attribute_name)
+                    and hasattr(getattr(user, profile_attribute_name), 'get_absolute_url')):
                 tpl = "<a href='%s'>%s</a>"
-                data = (user.profile.get_absolute_url(), user.get_full_name())
+                profile = getattr(user, profile_attribute_name)
+                data = (profile.get_absolute_url(), user.get_full_name())
             else:
                 tpl = "%s"
                 data = user.get_full_name()
@@ -80,3 +102,23 @@ def render_members(negotiation_part):
         return ', '.join(_members)
     else:
         return ''
+
+
+@register.simple_tag
+def render_clients(negotiable):
+    try:
+        negotiation = negotiable.negotiation
+    except Exception as e:
+        logger.exception(e)
+        return ''
+    return render_members(negotiation.client)
+
+
+@register.simple_tag
+def render_sellers(negotiable):
+    try:
+        negotiation = negotiable.negotiation
+    except Exception as e:
+        logger.exception(e)
+        return ''
+    return render_members(negotiation.seller)

@@ -1,7 +1,7 @@
 # coding=utf-8
 from django.contrib.contenttypes.generic import GenericRelation
 from django.contrib.auth.models import Group
-from .models import Negotiation, NegotiationPart
+from models import Negotiation, NegotiationPart
 
 
 def negotiate(self, client, seller, notes):
@@ -29,7 +29,7 @@ def negotiate(self, client, seller, notes):
         seller=seller,
         notes=notes
     )
-    new_negotiation.save(user=self.creator)
+    new_negotiation.save(user=self.creator, comment=new_negotiation.history_comment)
     new_negotiation.init_permissions()
     return True
 
@@ -37,9 +37,11 @@ def negotiate(self, client, seller, notes):
 def freeze(self):
     raise NotImplementedError("Negotiable classes must implement a freeze(self) method.")
 
+
 @property
 def creator(self):
-    raise NotImplementedError("Negotiable classes must either have an creator property or an creator field.")
+    raise NotImplementedError("Negotiable classes must either have a creator property or a creator field.")
+
 
 @property
 def negotiation(self):
@@ -47,6 +49,122 @@ def negotiation(self):
         return self.negotiations.all()[0]
     except IndexError:
         return None
+
+
+def status_for(self, user):
+    try:
+        return self.negotiation.status_for(user)
+    except AttributeError:
+        return None
+
+
+def accept(self, user, notes="", **kwargs):
+    try:
+        return self.negotiation.accept(user, notes, **kwargs)
+    except AttributeError:
+        return False
+
+
+def cancel(self, user, notes="", **kwargs):
+    try:
+        return self.negotiation.cancel(user, notes, **kwargs)
+    except AttributeError:
+        return False
+
+
+def counter_proposal(self, user, notes="", **kwargs):
+    try:
+        return self.negotiation.negotiate(user, notes, **kwargs)
+    except AttributeError:
+        return False
+
+
+def modify_proposal(self, user, notes="", **kwargs):
+    try:
+        return self.negotiation.modify(user, notes, **kwargs)
+    except AttributeError:
+        return False
+
+
+def is_client(self, user):
+    try:
+        return self.negotiation.is_client(user)
+    except AttributeError:
+        return False
+
+
+def is_seller(self, user):
+    try:
+        return self.negotiation.is_seller(user)
+    except AttributeError:
+        return False
+
+
+def last_proposal_from(self, user):
+    try:
+        return self.negotiation.last_proposal_from(user)
+    except AttributeError:
+        return None
+
+
+def last_counterpart_proposal_for(self, user):
+    try:
+        return self.negotiation.last_counterpart_proposal_for(user)
+    except AttributeError:
+        return None
+
+
+@property
+def last_seller_proposal(self):
+    try:
+        return self.negotiation.last_seller_proposal
+    except AttributeError:
+        return None
+
+
+@property
+def last_client_proposal(self):
+    try:
+        return self.negotiation.last_client_proposal
+    except AttributeError:
+        return None
+
+
+@property
+def initiator(self):
+    try:
+        return self.negotiation.initiator
+    except AttributeError:
+        return None
+
+
+@property
+def last_updater(self):
+    try:
+        return self.negotiation.last_updater
+    except AttributeError:
+        return None
+
+
+def is_last_updater(self, user):
+    try:
+        return self.negotiation.is_last_updater(user)
+    except AttributeError:
+        return False
+
+
+def history(self, recent_first=True):
+    try:
+        return self.negotiation.history(recent_first)
+    except AttributeError:
+        return None
+
+
+def negotiation_options(self, user):
+    try:
+        return self.negotiation.get_allowed_transitions(user)
+    except AttributeError:
+        return []
 
 
 def negotiable(cls):
@@ -67,5 +185,53 @@ def negotiable(cls):
 
     # add the negotiate method
     setattr(cls, 'negotiate', negotiate)
+
+    # add the status_for method
+    setattr(cls, 'status_for', status_for)
+
+    # add the accept method
+    setattr(cls, 'accept', accept)
+
+    # add the cancel method
+    setattr(cls, 'cancel', cancel)
+
+    # add the counter_proposal method
+    setattr(cls, 'counter_proposal', counter_proposal)
+
+    # add the modify_proposal method
+    setattr(cls, 'modify_proposal', modify_proposal)
+
+    # add the is_seller method
+    setattr(cls, 'is_seller', is_seller)
+
+    # add the is_client method
+    setattr(cls, 'is_client', is_client)
+
+    # add the last_proposal_from method
+    setattr(cls, 'last_proposal_from', last_proposal_from)
+
+    # add the last_counterpart_proposal_for method
+    setattr(cls, 'last_counterpart_proposal_for', last_counterpart_proposal_for)
+
+    # add the last_client_proposal property
+    setattr(cls, 'last_client_proposal', last_client_proposal)
+
+    # add the last_seller_proposal property
+    setattr(cls, 'last_seller_proposal', last_seller_proposal)
+
+    # add the initiator property
+    setattr(cls, 'initiator', initiator)
+
+    # add the last_updater property
+    setattr(cls, 'last_updater', last_updater)
+
+    # add the is_last_updater method
+    setattr(cls, 'is_last_updater', is_last_updater)
+
+    # add the history method
+    setattr(cls, 'history', history)
+
+    # add the negotiation_options method
+    setattr(cls, 'negotiation_options', negotiation_options)
 
     return cls

@@ -16,7 +16,6 @@ DEFAULT_APPS = (
 THIRD_PARTY_APPS = (
     'permissions',
     'workflows',
-    'business_workflow',
 )
 
 LOCAL_APPS = (
@@ -40,3 +39,5 @@ DATABASES = {
         'NAME': 'db.sqlite3',
     }
 }
+
+WORKFLOWS = {}

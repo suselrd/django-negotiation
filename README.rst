@@ -7,6 +7,16 @@ Negotiation Workflow Management for Django>=1.6.1
 
 Changelog
 =========
+
+0.2.0
+-----
+
+Replaced dependencies django-workflows and django-business-workflow for django-wflow.
+Added convenient methods to negotiable models, to handle its correspondent negotiation.
+Added new custom template tags, to access a negotiable clients and sellers (and render them properly), without having to
+access its correspondent negotiation object.
+
+
 0.1.2
 -----
 
