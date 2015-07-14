@@ -29,6 +29,9 @@ class NegotiationTest(TestCase):
         self.assertRaises(NotImplementedError, self.bad_offer.negotiate, self.users['client1'], self.users['seller'],
                           "I offer 1000 dollars.")
 
+        # try to access manager's methods
+        self.assertEqual(Offer.objects.accepted().count(), 0)
+
     def test_permissions(self):
         self.offer.negotiate(self.users['client1'], self.users['seller'], "I offer 1000 dollars.")
         self.assertEqual(len(self.offer.negotiation_options(self.users['client1'])), 1)
@@ -58,6 +61,8 @@ class NegotiationTest(TestCase):
 
     def test_transitions(self):
         self.offer.negotiate(self.users['client1'], self.users['seller'], "I offer 1000 dollars.")
+        self.assertTrue(self.offer.is_negotiating)
+        self.assertEqual(Offer.objects.negotiating().count(), 1)
 
         # modify a previous offer and execute corresponding WF transition
         self.offer.amount = 900
@@ -74,6 +79,16 @@ class NegotiationTest(TestCase):
         self.assertEqual(len([version for version in self.offer.history()]), 3)
         self.assertEqual(self.offer.last_client_proposal['content']['value'], 900)
         self.assertEqual(self.offer.last_seller_proposal['content']['value'], 950)
+
+        # accept
+        self.offer.accept(self.users['client1'], "ok, that's ok with me!")
+        self.assertTrue(self.offer.is_accepted)
+        self.assertFalse(self.offer.is_negotiating)
+        self.assertFalse(self.offer.is_cancelled)
+        self.assertEqual(Offer.objects.all().count(), 1)
+        self.assertEqual(Offer.objects.accepted().count(), 1)
+        self.assertEqual(Offer.objects.negotiating().count(), 0)
+        self.assertEqual(Offer.objects.cancelled().count(), 0)
 
     def test_initiator_property(self):
         self.offer.negotiate(self.users['client1'], self.users['seller'], "I offer 1000 dollars.")

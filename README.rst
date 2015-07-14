@@ -8,6 +8,27 @@ Negotiation Workflow Management for Django>=1.6.1
 Changelog
 =========
 
+0.3.0
+-----
+Added convenient methods to negotiable models, to return whether the instance has currently a specific state or not.
+Example usage:
+   if negotiable.is_accepted:
+        ## do something
+   elif negotiable.is_cancelled:
+        ## do something else
+   elif negotiable.is_negotiating:
+        ## last case, do something appropriate
+   else:
+        pass  # unexpected results
+
+
+Added convenient methods to negotiable models managers, to filter instances by a specific current state.
+Example usage:
+    accepted_list = Negotiable.objects.accepted(),
+    cancelled_count = Negotiable.objects.cancelled().count()
+    negotiating_list = Negotiable.objects.negotiating()
+** Note: assuming that 'Negotiable' is a Django model, decorated with @negotiable
+
 0.2.0
 -----
 

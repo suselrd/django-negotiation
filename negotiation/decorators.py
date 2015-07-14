@@ -4,6 +4,30 @@ from django.contrib.auth.models import Group
 from models import Negotiation, NegotiationPart
 
 
+class ExtendedNegotiableQuerysetMixin(object):
+
+    def negotiating(self):
+        return self.filter(negotiations__current_state__name='Negotiating')
+
+    def accepted(self):
+        return self.filter(negotiations__current_state__name='Accepted')
+
+    def cancelled(self):
+        return self.filter(negotiations__current_state__name='Cancelled')
+
+
+class ExtendedNegotiableManagerMixin(object):
+
+    def negotiating(self):
+        return self.get_queryset().negotiating()
+
+    def accepted(self):
+        return self.get_queryset().accepted()
+
+    def cancelled(self):
+        return self.get_queryset().cancelled()
+
+
 def negotiate(self, client, seller, notes):
     if self.negotiation is not None:
         return  # only one instance of negotiation allowed per negotiable object
@@ -48,6 +72,38 @@ def negotiation(self):
     try:
         return self.negotiations.all()[0]
     except IndexError:
+        return None
+
+
+@property
+def is_negotiating(self):
+    try:
+        return self.negotiation.is_negotiating
+    except AttributeError:
+        return None
+
+
+@property
+def is_accepted(self):
+    try:
+        return self.negotiation.is_accepted
+    except AttributeError:
+        return None
+
+
+@property
+def is_cancelled(self):
+    try:
+        return self.negotiation.is_cancelled
+    except AttributeError:
+        return None
+
+
+@property
+def is_accepted(self):
+    try:
+        return self.negotiation.is_accepted
+    except AttributeError:
         return None
 
 
@@ -168,6 +224,8 @@ def negotiation_options(self, user):
 
 
 def negotiable(cls):
+    # EXTEND NEGOTIABLE CLASS
+
     # add the default for mandatory method 'freeze'
     if not hasattr(cls, 'freeze') or not callable(getattr(cls, 'freeze')):
         setattr(cls, 'freeze', freeze)
@@ -201,6 +259,15 @@ def negotiable(cls):
     # add the modify_proposal method
     setattr(cls, 'modify_proposal', modify_proposal)
 
+    # add the is_negotiating property
+    setattr(cls, 'is_negotiating', is_negotiating)
+
+    # add the is_accepted property
+    setattr(cls, 'is_accepted', is_accepted)
+
+    # add the is_cancelled property
+    setattr(cls, 'is_cancelled', is_cancelled)
+
     # add the is_seller method
     setattr(cls, 'is_seller', is_seller)
 
@@ -233,5 +300,25 @@ def negotiable(cls):
 
     # add the negotiation_options method
     setattr(cls, 'negotiation_options', negotiation_options)
+
+    # EXTEND NEGOTIABLE CLASS'S MANAGERS AND QUERYSETS
+
+    cls._meta.concrete_managers.sort()
+    managers = [(mgr_name, manager) for _, mgr_name, manager in cls._meta.concrete_managers]
+
+    setattr(cls, '_default_manager', None)  # clean the default manager
+    setattr(cls._meta, 'concrete_managers', [])  # clean the managers
+
+    for mgr_name, manager in managers:
+
+        class ExtendedNegotiableManager(ExtendedNegotiableManagerMixin, manager.__class__):
+
+            class ExtendedNegotiableQueryset(ExtendedNegotiableQuerysetMixin, manager.get_queryset().__class__):
+                pass
+
+            def get_queryset(self):
+                return self.ExtendedNegotiableQueryset(self.model, using=self._db)
+
+        cls.add_to_class(mgr_name, ExtendedNegotiableManager())
 
     return cls
